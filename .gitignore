@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+scripts/.vicare_token.save
+scripts/schedule_backup.json
+.venv/
+venv/

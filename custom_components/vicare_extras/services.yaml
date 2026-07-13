@@ -1,0 +1,77 @@
+set_circulation_schedule:
+  description: >-
+    Set the weekly time program of the DHW circulation pump. Days you omit are
+    set to empty (pump off that day). Each entry needs start/end (HH:MM),
+    and a mode supported by your device (see the switch entity's
+    available_modes attribute, e.g. "on", "5/25-cycles").
+  fields:
+    mon:
+      description: List of schedule entries for Monday.
+      example: '[{"start": "06:00", "end": "08:00", "mode": "on"}]'
+      selector:
+        object:
+    tue:
+      description: List of schedule entries for Tuesday.
+      selector:
+        object:
+    wed:
+      description: List of schedule entries for Wednesday.
+      selector:
+        object:
+    thu:
+      description: List of schedule entries for Thursday.
+      selector:
+        object:
+    fri:
+      description: List of schedule entries for Friday.
+      selector:
+        object:
+    sat:
+      description: List of schedule entries for Saturday.
+      selector:
+        object:
+    sun:
+      description: List of schedule entries for Sunday.
+      selector:
+        object:
+
+set_dhw_schedule:
+  description: >-
+    Set the weekly domestic hot water time program (the periods when the heat
+    pump produces hot water). Days you omit are set to empty. Typical modes:
+    "normal", "top".
+  fields:
+    mon:
+      description: List of schedule entries for Monday.
+      example: '[{"start": "05:00", "end": "22:00", "mode": "normal"}]'
+      selector:
+        object:
+    tue:
+      description: List of schedule entries for Tuesday.
+      selector:
+        object:
+    wed:
+      description: List of schedule entries for Wednesday.
+      selector:
+        object:
+    thu:
+      description: List of schedule entries for Thursday.
+      selector:
+        object:
+    fri:
+      description: List of schedule entries for Friday.
+      selector:
+        object:
+    sat:
+      description: List of schedule entries for Saturday.
+      selector:
+        object:
+    sun:
+      description: List of schedule entries for Sunday.
+      selector:
+        object:
+
+get_schedules:
+  description: >-
+    Return the current circulation pump schedule, its available modes, and the
+    DHW time program. Useful to copy, edit, and re-post via the set services.

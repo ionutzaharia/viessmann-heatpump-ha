@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Viessmann ViCare",
+        "description": "Use your ViCare account and an API client ID from the Viessmann developer portal (the same one used for the official vicare integration works).",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "client_id": "API client ID"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate ViCare Extras",
+        "data": {
+          "password": "Password",
+          "client_id": "API client ID"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email, password, or client ID",
+      "cannot_connect": "Could not connect to the Viessmann API"
+    },
+    "abort": {
+      "already_configured": "This account is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ViCare Extras options",
+        "data": {
+          "scan_interval": "Polling interval (minutes)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "dhw_circulation_pump": {
+        "name": "DHW circulation pump"
+      }
+    }
+  }
+}
