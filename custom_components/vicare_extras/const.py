@@ -10,7 +10,7 @@ CONF_SCAN_INTERVAL: Final = "scan_interval"
 DEFAULT_SCAN_INTERVAL_MINUTES: Final = 15
 TOKEN_FILENAME: Final = ".storage/vicare_extras_token.save"
 
-PLATFORMS: Final = ["switch"]
+PLATFORMS: Final = ["button", "sensor", "switch"]
 
 WEEKDAYS: Final = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 

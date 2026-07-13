@@ -42,6 +42,22 @@
       "dhw_circulation_pump": {
         "name": "DHW circulation pump"
       }
+    },
+    "button": {
+      "backup_circulation_schedule": {
+        "name": "Back up circulation schedule"
+      },
+      "restore_circulation_schedule": {
+        "name": "Restore circulation schedule"
+      },
+      "copy_dhw_to_circulation": {
+        "name": "Copy DHW schedule to circulation pump"
+      }
+    },
+    "sensor": {
+      "circulation_schedule_backup": {
+        "name": "Circulation schedule last backup"
+      }
     }
   }
 }

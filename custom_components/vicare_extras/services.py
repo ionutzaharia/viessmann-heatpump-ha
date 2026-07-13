@@ -5,10 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from PyViCare.PyViCareUtils import (
-    PyViCareCommandError,
-    PyViCareRateLimitError,
-)
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntryState
@@ -22,7 +18,6 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
-    DHW_SCHEDULE_FEATURE,
     DOMAIN,
     SERVICE_GET_SCHEDULES,
     SERVICE_SET_CIRCULATION_SCHEDULE,
@@ -68,42 +63,20 @@ def _build_full_week(call_data: dict[str, Any]) -> dict[str, list[dict[str, Any]
     return schedule
 
 
-async def _async_write_schedule(
-    hass: HomeAssistant, write_fn, schedule: dict[str, Any]
-) -> None:
-    """Run a schedule write in the executor with error translation."""
-    coordinator = _get_coordinator(hass)
-    try:
-        await hass.async_add_executor_job(write_fn, coordinator, schedule)
-    except PyViCareCommandError as err:
-        raise HomeAssistantError(f"Viessmann API rejected the schedule: {err}") from err
-    except PyViCareRateLimitError as err:
-        raise HomeAssistantError(
-            f"Viessmann API rate limit reached, resets at {err.limitResetDate}"
-        ) from err
-    await coordinator.async_request_refresh()
-
-
-def _write_circulation(coordinator: ViCareExtrasCoordinator, schedule: dict) -> None:
-    coordinator.device.setDomesticHotWaterCirculationSchedule(schedule)
-
-
-def _write_dhw(coordinator: ViCareExtrasCoordinator, schedule: dict) -> None:
-    coordinator.device.service.setProperty(
-        DHW_SCHEDULE_FEATURE, "setSchedule", {"newSchedule": schedule}
-    )
-
-
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register services (idempotent)."""
     if hass.services.has_service(DOMAIN, SERVICE_SET_CIRCULATION_SCHEDULE):
         return
 
     async def handle_set_circulation_schedule(call: ServiceCall) -> None:
-        await _async_write_schedule(hass, _write_circulation, _build_full_week(call.data))
+        coordinator = _get_coordinator(hass)
+        await coordinator.async_write_circulation_schedule(_build_full_week(call.data))
+        await coordinator.async_request_refresh()
 
     async def handle_set_dhw_schedule(call: ServiceCall) -> None:
-        await _async_write_schedule(hass, _write_dhw, _build_full_week(call.data))
+        coordinator = _get_coordinator(hass)
+        await coordinator.async_write_dhw_schedule(_build_full_week(call.data))
+        await coordinator.async_request_refresh()
 
     async def handle_get_schedules(call: ServiceCall) -> ServiceResponse:
         coordinator = _get_coordinator(hass)

@@ -13,6 +13,16 @@ missing for Viessmann heat pumps (built for a Vitocal 200-S):
   (`heating.dhw.schedule`) — the daily periods when hot water is produced.
 - **`vicare_extras.get_schedules`** — read back both schedules and the valid
   circulation modes (returns response data).
+- **Backup buttons + sensor** — *Back up circulation schedule* saves the
+  current weekly program into HA storage (survives restarts); *Restore
+  circulation schedule* uploads it back to the device (unavailable until a
+  backup exists). The *Circulation schedule last backup* sensor shows when the
+  backup was taken, with the saved schedule and a readable per-day preview as
+  attributes.
+- **Copy button** — *Copy DHW schedule to circulation pump* mirrors the DWH
+  time program onto the circulation pump schedule (so water circulates exactly
+  when hot water is being produced). Tip: press backup first — copying
+  overwrites the pump's current schedule.
 
 Runs alongside the official integration; it authenticates separately with the
 same API client ID.

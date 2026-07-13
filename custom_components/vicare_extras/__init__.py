@@ -82,6 +82,7 @@ async def async_setup_entry(
     _LOGGER.debug("ViCare Extras using device %s (serial %s)", model, serial)
 
     coordinator = ViCareExtrasCoordinator(hass, entry, device, serial, model)
+    await coordinator.async_load_backup()
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
 
