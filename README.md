@@ -39,6 +39,28 @@ missing for Viessmann heat pumps (built for a Vitocal 200-S):
     minutes: 90
   ```
 
+- **Comfort warm water (inertia-aware boost)** — one press handles the whole
+  sequence: trigger a one-time DHW charge (tank starts heating immediately),
+  poll the tank temperature every 2 minutes until it reaches the DHW setpoint
+  minus 2 K (max 50 minutes, then it proceeds anyway), *then* start the
+  schedule override — circulation deliberately starts only once the tank is
+  hot, so the cold loop never drains the tank while it's charging. Restores
+  everything automatically afterwards. Use the *Comfort warm water* button
+  (duration comes from the *Override duration* number) or the service:
+
+  ```yaml
+  service: vicare_extras.comfort_warm_water
+  data:
+    minutes: 120   # optional; defaults to the Override duration number
+  ```
+
+  The *Comfort warm water phase* sensor shows `idle` / `charging` / `active`
+  (with tank temperature and charging target as attributes) — put it on a
+  dashboard next to the button. *Cancel comfort warm water* aborts whichever
+  phase is running. The charging phase survives HA restarts. If the tank is
+  already hot, charging completes within one poll and the boost starts ~2
+  minutes after the press.
+
 Runs alongside the official integration; it authenticates separately with the
 same API client ID.
 

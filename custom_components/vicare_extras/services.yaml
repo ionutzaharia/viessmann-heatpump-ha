@@ -93,6 +93,29 @@ cancel_override:
     End an active schedule override now and restore the saved DHW and
     circulation pump plans immediately.
 
+comfort_warm_water:
+  description: >-
+    Inertia-aware comfort boost: trigger a one-time DHW charge, wait until the
+    tank reaches the DHW setpoint minus 2 K (checked every 2 minutes, max 50
+    minutes), then switch DHW + circulation schedules to always-on for the
+    given duration and restore the previous plans afterwards.
+  fields:
+    minutes:
+      description: >-
+        Boost duration after the tank is hot. Defaults to the Override
+        duration number entity.
+      example: 120
+      selector:
+        number:
+          min: 1
+          max: 1440
+          unit_of_measurement: minutes
+
+cancel_comfort:
+  description: >-
+    Abort the comfort sequence: deactivate the one-time charge if still
+    charging, and/or end the schedule override and restore the saved plans.
+
 get_schedules:
   description: >-
     Return the current circulation pump schedule, its available modes, and the

@@ -19,7 +19,9 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import (
     DOMAIN,
+    SERVICE_CANCEL_COMFORT,
     SERVICE_CANCEL_OVERRIDE,
+    SERVICE_COMFORT_WARM_WATER,
     SERVICE_GET_SCHEDULES,
     SERVICE_OVERRIDE_SCHEDULES,
     SERVICE_SET_CIRCULATION_SCHEDULE,
@@ -86,6 +88,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
     async def handle_cancel_override(call: ServiceCall) -> None:
         await _get_coordinator(hass).async_end_override()
 
+    async def handle_comfort_warm_water(call: ServiceCall) -> None:
+        await _get_coordinator(hass).async_start_comfort(call.data.get("minutes"))
+
+    async def handle_cancel_comfort(call: ServiceCall) -> None:
+        await _get_coordinator(hass).async_cancel_comfort()
+
     async def handle_get_schedules(call: ServiceCall) -> ServiceResponse:
         coordinator = _get_coordinator(hass)
         await coordinator.async_refresh()
@@ -124,6 +132,23 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_CANCEL_OVERRIDE,
         handle_cancel_override,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_COMFORT_WARM_WATER,
+        handle_comfort_warm_water,
+        schema=vol.Schema(
+            {
+                vol.Optional("minutes"): vol.All(
+                    vol.Coerce(int), vol.Range(min=1, max=1440)
+                )
+            }
+        ),
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CANCEL_COMFORT,
+        handle_cancel_comfort,
     )
     hass.services.async_register(
         DOMAIN,

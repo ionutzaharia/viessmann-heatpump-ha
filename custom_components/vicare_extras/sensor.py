@@ -25,6 +25,7 @@ async def async_setup_entry(
         [
             ViCareCirculationBackupSensor(entry.runtime_data),
             ViCareOverrideEndsSensor(entry.runtime_data),
+            ViCareComfortPhaseSensor(entry.runtime_data),
         ]
     )
 
@@ -87,4 +88,34 @@ class ViCareOverrideEndsSensor(ViCareExtrasEntity, SensorEntity):
                 saved.get("circulation")
             ),
             "saved_dhw_preview": format_schedule_preview(saved.get("dhw")),
+        }
+
+
+class ViCareComfortPhaseSensor(ViCareExtrasEntity, SensorEntity):
+    """Which phase the comfort warm water sequence is in."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["idle", "charging", "active"]
+    _attr_translation_key = "comfort_phase"
+    _attr_icon = "mdi:shower-head"
+
+    def __init__(self, coordinator: ViCareExtrasCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "comfort-phase")
+
+    @property
+    def native_value(self) -> str:
+        """Return the comfort phase."""
+        return self.coordinator.comfort_phase
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose tank temperature and the charging target."""
+        data = self.coordinator.data
+        comfort = self.coordinator.comfort or {}
+        return {
+            "tank_temperature": data.dhw_storage_temperature,
+            "dhw_setpoint": data.dhw_main_setpoint,
+            "charging_target": comfort.get("threshold"),
+            "one_time_charge_active": data.one_time_charge_active,
         }

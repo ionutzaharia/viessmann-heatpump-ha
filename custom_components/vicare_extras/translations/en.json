@@ -58,6 +58,12 @@
       },
       "cancel_override": {
         "name": "Cancel schedule override"
+      },
+      "comfort_warm_water": {
+        "name": "Comfort warm water"
+      },
+      "cancel_comfort": {
+        "name": "Cancel comfort warm water"
       }
     },
     "number": {
@@ -71,6 +77,14 @@
       },
       "override_ends": {
         "name": "Schedule override ends"
+      },
+      "comfort_phase": {
+        "name": "Comfort warm water phase",
+        "state": {
+          "idle": "Idle",
+          "charging": "Charging tank",
+          "active": "Active"
+        }
       }
     }
   }

@@ -55,6 +55,19 @@ BUTTONS: tuple[ViCareExtrasButtonDescription, ...] = (
         press_fn=lambda c: c.async_end_override(),
         available_fn=lambda c: c.override is not None,
     ),
+    ViCareExtrasButtonDescription(
+        key="comfort_warm_water",
+        translation_key="comfort_warm_water",
+        icon="mdi:shower-head",
+        press_fn=lambda c: c.async_start_comfort(),
+    ),
+    ViCareExtrasButtonDescription(
+        key="cancel_comfort",
+        translation_key="cancel_comfort",
+        icon="mdi:water-off",
+        press_fn=lambda c: c.async_cancel_comfort(),
+        available_fn=lambda c: c.comfort_phase != "idle",
+    ),
 )
 
 

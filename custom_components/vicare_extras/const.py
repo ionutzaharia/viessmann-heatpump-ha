@@ -25,3 +25,12 @@ SERVICE_CANCEL_OVERRIDE: Final = "cancel_override"
 
 # Preferred mode for the switch's "always on" schedule, if the device offers it.
 PREFERRED_ON_MODE: Final = "on"
+
+# Comfort mode: charge tank, wait for temperature, then run the override.
+COMFORT_POLL_INTERVAL_SECONDS: Final = 120
+COMFORT_CHARGING_TIMEOUT_MINUTES: Final = 50
+COMFORT_THRESHOLD_DELTA: Final = 2.0  # trigger at DHW setpoint minus this many K
+COMFORT_FALLBACK_THRESHOLD: Final = 45.0  # if the setpoint can't be read
+
+SERVICE_COMFORT_WARM_WATER: Final = "comfort_warm_water"
+SERVICE_CANCEL_COMFORT: Final = "cancel_comfort"
