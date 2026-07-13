@@ -23,6 +23,21 @@ missing for Viessmann heat pumps (built for a Vitocal 200-S):
   time program onto the circulation pump schedule (so water circulates exactly
   when hot water is being produced). Tip: press backup first — copying
   overwrites the pump's current schedule.
+- **Schedule override (boost)** — `vicare_extras.override_schedules` with
+  `minutes: N` saves both current plans, switches DHW **and** circulation to
+  always-on, and restores the saved plans automatically when time is up. Also
+  available from the UI: set the *Override duration* number and press *Start
+  schedule override*; *Cancel schedule override* restores early. The *Schedule
+  override ends* sensor shows the restore time (with previews of the saved
+  plans as attributes). Calling override again while active extends the timer.
+  The pending restore is stored in HA storage, so it survives restarts; if a
+  restore attempt fails (e.g. rate limit), it retries every 5 minutes.
+
+  ```yaml
+  service: vicare_extras.override_schedules
+  data:
+    minutes: 90
+  ```
 
 Runs alongside the official integration; it authenticates separately with the
 same API client ID.

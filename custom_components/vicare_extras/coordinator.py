@@ -17,8 +17,9 @@ from PyViCare.PyViCareUtils import (
 import requests
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -73,10 +74,18 @@ class ViCareExtrasCoordinator(DataUpdateCoordinator[ViCareExtrasData]):
         self.backup_store: Store = Store(hass, 1, f"{DOMAIN}_backup")
         # {"schedule": {day: [entries]}, "backed_up_at": iso-utc}
         self.backup: dict[str, Any] | None = None
+        self.override_store: Store = Store(hass, 1, f"{DOMAIN}_override")
+        # {"saved": {"circulation": {...}, "dhw": {...}}, "expires_at": iso-utc}
+        self.override: dict[str, Any] | None = None
+        self.override_duration_minutes: int = 60
+        self._override_timer: CALLBACK_TYPE | None = None
 
     async def async_load_backup(self) -> None:
-        """Load a previously stored circulation schedule backup."""
+        """Load stored circulation backup and any pending schedule override."""
         self.backup = await self.backup_store.async_load()
+        self.override = await self.override_store.async_load()
+        if self.override:
+            await self._async_schedule_override_end()
 
     def preferred_circulation_mode(self) -> str:
         """Return the best schedule mode the device offers."""
@@ -134,6 +143,97 @@ class ViCareExtrasCoordinator(DataUpdateCoordinator[ViCareExtrasData]):
             )
         await self.async_write_circulation_schedule(self.backup["schedule"])
         await self.async_request_refresh()
+
+    def _always_on_schedule(self, mode: str) -> dict:
+        return {
+            day: [{"start": "00:00", "end": "24:00", "mode": mode, "position": 0}]
+            for day in WEEKDAYS
+        }
+
+    async def async_start_override(self, minutes: int) -> None:
+        """Boost DHW + circulation with always-on schedules for N minutes.
+
+        The original plans are persisted before writing, so even a partial
+        write failure or an HA restart still ends in a restore at expiry.
+        Starting again while active only extends the timer; the originally
+        saved plans are kept.
+        """
+        expires_at = dt_util.utcnow() + timedelta(minutes=minutes)
+        extending = self.override is not None
+        if not extending:
+            circulation = self.data.circulation_schedule if self.data else None
+            dhw = self.data.dhw_schedule if self.data else None
+            if circulation is None or dhw is None:
+                raise HomeAssistantError(
+                    "Current schedules not available; cannot start override"
+                )
+            self.override = {
+                "saved": {
+                    "circulation": {day: circulation.get(day, []) for day in WEEKDAYS},
+                    "dhw": {day: dhw.get(day, []) for day in WEEKDAYS},
+                },
+                "expires_at": expires_at.isoformat(),
+            }
+        else:
+            self.override["expires_at"] = expires_at.isoformat()
+        await self.override_store.async_save(self.override)
+        await self._async_schedule_override_end()
+        self.async_update_listeners()
+
+        if not extending:
+            await self.async_write_circulation_schedule(
+                self._always_on_schedule(self.preferred_circulation_mode())
+            )
+            await self.async_write_dhw_schedule(self._always_on_schedule("on"))
+            await self.async_request_refresh()
+
+    async def async_end_override(self) -> None:
+        """Restore the schedules saved when the override started."""
+        if not self.override:
+            raise HomeAssistantError("No schedule override is active")
+        saved = self.override["saved"]
+        await self.async_write_circulation_schedule(saved["circulation"])
+        await self.async_write_dhw_schedule(saved["dhw"])
+        self._cancel_override_timer()
+        self.override = None
+        await self.override_store.async_remove()
+        self.async_update_listeners()
+        await self.async_request_refresh()
+
+    def _cancel_override_timer(self) -> None:
+        if self._override_timer:
+            self._override_timer()
+            self._override_timer = None
+
+    async def _async_schedule_override_end(self) -> None:
+        self._cancel_override_timer()
+        expires_at = dt_util.parse_datetime(self.override["expires_at"])
+        if expires_at is None or expires_at <= dt_util.utcnow():
+            await self._async_handle_override_end(dt_util.utcnow())
+            return
+        self._override_timer = async_track_point_in_utc_time(
+            self.hass, self._async_handle_override_end, expires_at
+        )
+
+    async def _async_handle_override_end(self, _now) -> None:
+        self._override_timer = None
+        try:
+            await self.async_end_override()
+        except HomeAssistantError as err:
+            _LOGGER.error(
+                "Failed to restore schedules after override, retrying in 5 minutes: %s",
+                err,
+            )
+            self.override["expires_at"] = (
+                dt_util.utcnow() + timedelta(minutes=5)
+            ).isoformat()
+            await self.override_store.async_save(self.override)
+            await self._async_schedule_override_end()
+
+    async def async_shutdown(self) -> None:
+        """Cancel the restore timer on unload (the stored override survives)."""
+        self._cancel_override_timer()
+        await super().async_shutdown()
 
     async def async_copy_dhw_to_circulation(self) -> None:
         """Copy the DHW time program onto the circulation pump schedule."""

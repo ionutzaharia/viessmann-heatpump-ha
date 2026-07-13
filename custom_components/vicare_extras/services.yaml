@@ -71,6 +71,28 @@ set_dhw_schedule:
       selector:
         object:
 
+override_schedules:
+  description: >-
+    Boost: save the current DHW and circulation pump plans, switch both to
+    always-on, and automatically restore the saved plans after the given
+    number of minutes. Calling again while active extends the timer (the
+    originally saved plans are kept). Survives Home Assistant restarts.
+  fields:
+    minutes:
+      description: How long the override should last.
+      required: true
+      example: 60
+      selector:
+        number:
+          min: 1
+          max: 1440
+          unit_of_measurement: minutes
+
+cancel_override:
+  description: >-
+    End an active schedule override now and restore the saved DHW and
+    circulation pump plans immediately.
+
 get_schedules:
   description: >-
     Return the current circulation pump schedule, its available modes, and the

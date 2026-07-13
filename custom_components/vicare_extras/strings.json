@@ -52,11 +52,25 @@
       },
       "copy_dhw_to_circulation": {
         "name": "Copy DHW schedule to circulation pump"
+      },
+      "start_override": {
+        "name": "Start schedule override"
+      },
+      "cancel_override": {
+        "name": "Cancel schedule override"
+      }
+    },
+    "number": {
+      "override_duration": {
+        "name": "Override duration"
       }
     },
     "sensor": {
       "circulation_schedule_backup": {
         "name": "Circulation schedule last backup"
+      },
+      "override_ends": {
+        "name": "Schedule override ends"
       }
     }
   }

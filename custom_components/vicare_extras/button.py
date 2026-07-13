@@ -19,7 +19,7 @@ class ViCareExtrasButtonDescription(ButtonEntityDescription):
     """Button description with its coordinator action."""
 
     press_fn: Callable[[ViCareExtrasCoordinator], Awaitable[None]]
-    requires_backup: bool = False
+    available_fn: Callable[[ViCareExtrasCoordinator], bool] = lambda c: True
 
 
 BUTTONS: tuple[ViCareExtrasButtonDescription, ...] = (
@@ -34,13 +34,26 @@ BUTTONS: tuple[ViCareExtrasButtonDescription, ...] = (
         translation_key="restore_circulation_schedule",
         icon="mdi:backup-restore",
         press_fn=lambda c: c.async_restore_circulation_schedule(),
-        requires_backup=True,
+        available_fn=lambda c: c.backup is not None,
     ),
     ViCareExtrasButtonDescription(
         key="copy_dhw_to_circulation",
         translation_key="copy_dhw_to_circulation",
         icon="mdi:content-copy",
         press_fn=lambda c: c.async_copy_dhw_to_circulation(),
+    ),
+    ViCareExtrasButtonDescription(
+        key="start_override",
+        translation_key="start_override",
+        icon="mdi:rocket-launch",
+        press_fn=lambda c: c.async_start_override(c.override_duration_minutes),
+    ),
+    ViCareExtrasButtonDescription(
+        key="cancel_override",
+        translation_key="cancel_override",
+        icon="mdi:timer-cancel",
+        press_fn=lambda c: c.async_end_override(),
+        available_fn=lambda c: c.override is not None,
     ),
 )
 
@@ -73,10 +86,8 @@ class ViCareExtrasButton(ViCareExtrasEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        """Restore is only available once a backup exists."""
-        if self.entity_description.requires_backup and not self.coordinator.backup:
-            return False
-        return super().available
+        """Some actions need state (a backup, an active override) to exist."""
+        return self.entity_description.available_fn(self.coordinator) and super().available
 
     async def async_press(self) -> None:
         """Run the action."""

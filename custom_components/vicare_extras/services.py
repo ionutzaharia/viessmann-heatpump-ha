@@ -19,7 +19,9 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import (
     DOMAIN,
+    SERVICE_CANCEL_OVERRIDE,
     SERVICE_GET_SCHEDULES,
+    SERVICE_OVERRIDE_SCHEDULES,
     SERVICE_SET_CIRCULATION_SCHEDULE,
     SERVICE_SET_DHW_SCHEDULE,
     WEEKDAYS,
@@ -78,6 +80,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
         await coordinator.async_write_dhw_schedule(_build_full_week(call.data))
         await coordinator.async_request_refresh()
 
+    async def handle_override_schedules(call: ServiceCall) -> None:
+        await _get_coordinator(hass).async_start_override(call.data["minutes"])
+
+    async def handle_cancel_override(call: ServiceCall) -> None:
+        await _get_coordinator(hass).async_end_override()
+
     async def handle_get_schedules(call: ServiceCall) -> ServiceResponse:
         coordinator = _get_coordinator(hass)
         await coordinator.async_refresh()
@@ -99,6 +107,23 @@ def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_SET_DHW_SCHEDULE,
         handle_set_dhw_schedule,
         schema=SCHEDULE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_OVERRIDE_SCHEDULES,
+        handle_override_schedules,
+        schema=vol.Schema(
+            {
+                vol.Required("minutes"): vol.All(
+                    vol.Coerce(int), vol.Range(min=1, max=1440)
+                )
+            }
+        ),
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CANCEL_OVERRIDE,
+        handle_cancel_override,
     )
     hass.services.async_register(
         DOMAIN,
