@@ -37,10 +37,23 @@ CIRCULATION_FEATURE = "heating.dhw.pumps.circulation.schedule"
 DHW_SCHEDULE_FEATURE = "heating.dhw.schedule"
 
 
+def load_dotenv():
+    """Load KEY=VALUE lines from scripts/.env into os.environ if present."""
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 def get_env(name):
     value = os.environ.get(name)
     if not value:
-        sys.exit(f"Missing environment variable {name}")
+        sys.exit(f"Missing environment variable {name} (set it or add to scripts/.env)")
     return value
 
 
@@ -113,6 +126,7 @@ def main():
     )
     args = parser.parse_args()
 
+    load_dotenv()
     email = get_env("VICARE_EMAIL")
     password = get_env("VICARE_PASSWORD")
     client_id = get_env("VICARE_CLIENT_ID")
@@ -128,12 +142,15 @@ def main():
             f"serial={getattr(d.service.accessor, 'serial', '?')} online={d.isOnline()}"
         )
 
-    device_config = next(
-        (d for d in vicare.devices if d.getModel() not in ("Heatbox1", "E3_TCU41_x04")),
-        vicare.devices[0],
-    )
-    print(f"\nUsing device: {device_config.getModel()}")
-    device = device_config.asAutoDetectDevice()
+    device = None
+    for candidate in vicare.devices:
+        detected = candidate.asAutoDetectDevice()
+        print(f"  auto-detected {candidate.getModel()} -> {type(detected).__name__}")
+        if device is None and hasattr(detected, "getDomesticHotWaterCirculationSchedule"):
+            device = detected
+            print(f"\nUsing device: {candidate.getModel()}")
+    if device is None:
+        sys.exit("No device with DHW schedule support found in this account")
 
     # --- Read-only pass ---
     circ_schedule = safe_call(

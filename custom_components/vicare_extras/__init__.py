@@ -24,12 +24,13 @@ _LOGGER = logging.getLogger(__name__)
 
 ViCareExtrasConfigEntry = ConfigEntry[ViCareExtrasCoordinator]
 
-# Gateway/communication modules that never carry DHW features.
-_IGNORED_MODELS = ("Heatbox1", "Heatbox2_SRC", "E3_TCU41_x04", "E3_TCU10_x07")
-
-
 def _login_and_pick_device(hass: HomeAssistant, entry: ConfigEntry):
-    """Log in and return (device, serial, model) for the heating device."""
+    """Log in and return (device, serial, model) for the heating device.
+
+    Accounts list gateway/communication modules alongside the heating device;
+    pick by capability: the first device whose auto-detected class carries the
+    DHW schedule methods (Gateway objects don't, HeatingDevice subclasses do).
+    """
     vicare = PyViCare()
     vicare.initWithCredentials(
         entry.data[CONF_EMAIL],
@@ -41,11 +42,19 @@ def _login_and_pick_device(hass: HomeAssistant, entry: ConfigEntry):
     if not devices:
         raise ConfigEntryNotReady("No devices found in ViCare account")
 
-    device_config = next(
-        (d for d in devices if d.getModel() not in _IGNORED_MODELS), devices[0]
-    )
+    device = None
+    device_config = None
+    for candidate in devices:
+        detected = candidate.asAutoDetectDevice()
+        if hasattr(detected, "getDomesticHotWaterCirculationSchedule"):
+            device, device_config = detected, candidate
+            break
+    if device is None:
+        models = [d.getModel() for d in devices]
+        raise ConfigEntryNotReady(
+            f"No heating device with DHW support found; account devices: {models}"
+        )
     model = device_config.getModel()
-    device = device_config.asAutoDetectDevice()
     try:
         serial = device.getSerial()
     except Exception:  # noqa: BLE001 - serial is cosmetic; fall back to config id
