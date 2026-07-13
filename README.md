@@ -51,17 +51,20 @@ for the official integration works fine).
 ## Services
 
 Days you omit are set to **empty** (feature off that day). Entries per day are
-sorted by start time and positions are assigned automatically. Valid `mode`
-values are device-specific — check the switch entity's `available_modes`
-attribute or call `get_schedules`. Typical: `"on"`, `"5/25-cycles"`,
-`"5/10-cycles"` for circulation; `"normal"`, `"top"` for DHW.
+sorted by start time and positions are assigned automatically.
+
+Constraints are device-specific and enforced by the API — check the switch
+entity's `available_modes` attribute or call `get_schedules`. On a
+Vitocal 200-S (E3_Vitocal): only mode `"on"`, max **4 entries per day**,
+**10-minute** time resolution, no overlapping windows; `end: "24:00"` is
+valid. Other devices may offer cycle modes like `"5/25-cycles"`.
 
 ```yaml
 service: vicare_extras.set_circulation_schedule
 data:
   mon:
     - { start: "06:00", end: "08:00", mode: "on" }
-    - { start: "17:00", end: "22:00", mode: "5/25-cycles" }
+    - { start: "17:00", end: "22:00", mode: "on" }
   tue:
     - { start: "06:00", end: "08:00", mode: "on" }
   sat:
@@ -73,13 +76,13 @@ data:
 ```yaml
 service: vicare_extras.set_dhw_schedule
 data:
-  mon: [{ start: "05:00", end: "22:00", mode: "normal" }]
-  tue: [{ start: "05:00", end: "22:00", mode: "normal" }]
-  wed: [{ start: "05:00", end: "22:00", mode: "normal" }]
-  thu: [{ start: "05:00", end: "22:00", mode: "normal" }]
-  fri: [{ start: "05:00", end: "22:00", mode: "normal" }]
-  sat: [{ start: "06:00", end: "23:00", mode: "normal" }]
-  sun: [{ start: "06:00", end: "23:00", mode: "normal" }]
+  mon: [{ start: "05:00", end: "22:00", mode: "on" }]
+  tue: [{ start: "05:00", end: "22:00", mode: "on" }]
+  wed: [{ start: "05:00", end: "22:00", mode: "on" }]
+  thu: [{ start: "05:00", end: "22:00", mode: "on" }]
+  fri: [{ start: "05:00", end: "22:00", mode: "on" }]
+  sat: [{ start: "06:00", end: "23:00", mode: "on" }]
+  sun: [{ start: "06:00", end: "23:00", mode: "on" }]
 ```
 
 ```yaml
